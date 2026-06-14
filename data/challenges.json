@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1781327226714_209429792666157056_409120027304919050",
+    "challengerId": "209429792666157056",
+    "challengerName": "Azure",
+    "challengerRank": 2,
+    "targetId": "409120027304919050",
+    "targetName": "Fame",
+    "targetRank": 1,
+    "status": "completed",
+    "createdAt": "2026-06-13T05:07:06.714Z",
+    "winnerId": "209429792666157056",
+    "loserId": "409120027304919050",
+    "resolvedAt": "2026-06-13T05:07:57.444Z",
+    "resolvedBy": "209429792666157056"
+  },
+  {
+    "id": "1781327376687_409120027304919050_209429792666157056",
+    "challengerId": "409120027304919050",
+    "challengerName": "Fame",
+    "challengerRank": 2,
+    "targetId": "209429792666157056",
+    "targetName": "Azure",
+    "targetRank": 1,
+    "status": "completed",
+    "createdAt": "2026-06-13T05:09:36.687Z",
+    "winnerId": "209429792666157056",
+    "loserId": "409120027304919050",
+    "resolvedAt": "2026-06-13T05:17:28.967Z",
+    "resolvedBy": "409120027304919050"
+  }
+]
