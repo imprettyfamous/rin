@@ -22,7 +22,12 @@ const {
   handleSubmitOutcomeSelect,
 } = require("./src/ladder/resultActions");
 
-//command imports
+const {
+  handleBountyButton,
+  handleBountyModal,
+} = require("./src/bounty/bountyActions");
+
+// Command imports
 const pingCommand = require("./src/commands/ping");
 const setYogaiRoleCommand = require("./src/commands/setyogairole");
 const setLogChannelCommand = require("./src/commands/setlogchannel");
@@ -35,7 +40,10 @@ const forceRankCommand = require("./src/commands/forcerank");
 const removePlayerCommand = require("./src/commands/removeplayer");
 const exportLedgerCommand = require("./src/commands/exportledger");
 const postCommand = require("./src/commands/post");
-
+const setModChannelCommand = require("./src/commands/setmodchannel");
+const setBountyChannelCommand = require("./src/commands/setbountychannel");
+const postBountyBoardCommand = require("./src/commands/postbountyboard");
+const setPublicChatChannelCommand = require("./src/commands/setpublicchatchannel");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -43,74 +51,42 @@ const client = new Client({
 
 client.commands = new Collection();
 
-//command clients
-client.commands.set(
-  pingCommand.data.name,
-  pingCommand
-);
-client.commands.set(
-  setYogaiRoleCommand.data.name,
-  setYogaiRoleCommand
-);
-client.commands.set(
-  setLogChannelCommand.data.name,
-  setLogChannelCommand
-);
-client.commands.set(
-  registrationPostCommand.data.name,
-  registrationPostCommand
-);
-client.commands.set(
-  updateDonateLinkCommand.data.name,
-  updateDonateLinkCommand
-);
-client.commands.set(
-  ladderPostCommand.data.name,
-  ladderPostCommand
-);
-client.commands.set(
-  activeChallengesCommand.data.name,
-  activeChallengesCommand
-);
-client.commands.set(
-  setRecordCommand.data.name,
-  setRecordCommand
-);
-client.commands.set(
-  forceRankCommand.data.name,
-  forceRankCommand
-);
-client.commands.set(
-  removePlayerCommand.data.name,
-  removePlayerCommand
-);
-client.commands.set(
-  exportLedgerCommand.data.name,
-  exportLedgerCommand
-);
-client.commands.set(
-  postCommand.data.name,
-  postCommand
-);
+const commands = [
+  pingCommand,
+  setYogaiRoleCommand,
+  setLogChannelCommand,
+  registrationPostCommand,
+  updateDonateLinkCommand,
+  ladderPostCommand,
+  activeChallengesCommand,
+  setRecordCommand,
+  forceRankCommand,
+  removePlayerCommand,
+  exportLedgerCommand,
+  postCommand,
+  setModChannelCommand,
+  setBountyChannelCommand,
+  postBountyBoardCommand,
+  setPublicChatChannelCommand,
+];
+
+for (const command of commands) {
+  if (!command || !command.data) {
+    console.log("Broken command import:", command);
+    continue;
+  }
+
+  client.commands.set(command.data.name, command);
+}
 
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-//command registration
-await client.application.commands.set([
-  pingCommand.data.toJSON(),
-  setYogaiRoleCommand.data.toJSON(),
-  setLogChannelCommand.data.toJSON(),
-  registrationPostCommand.data.toJSON(),
-  updateDonateLinkCommand.data.toJSON(),
-  ladderPostCommand.data.toJSON(),
-  activeChallengesCommand.data.toJSON(),
-  setRecordCommand.data.toJSON(),
-  forceRankCommand.data.toJSON(),
-  removePlayerCommand.data.toJSON(),
-  exportLedgerCommand.data.toJSON(),
-  postCommand.data.toJSON(),
-]);
+  await client.application.commands.set(
+    commands
+      .filter(command => command && command.data)
+      .map(command => command.data.toJSON())
+  );
 
   console.log("Commands registered.");
 });
@@ -139,42 +115,73 @@ client.on("interactionCreate", async interaction => {
       if (interaction.customId === "rin_ladder_submit") {
         await handleSubmitButton(interaction);
         return;
-        }
+      }
+
+      if (interaction.customId.startsWith("rin_bounty_")) {
+        await handleBountyButton(interaction, client);
+        return;
+      }
     }
 
-if (interaction.isStringSelectMenu()) {
-  if (interaction.customId === "rin_challenge_select") {
-    await handleChallengeSelect(interaction, client);
-    return;
-  }
+    if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === "rin_challenge_select") {
+        await handleChallengeSelect(interaction, client);
+        return;
+      }
 
-  if (interaction.customId === "rin_submit_challenge_select") {
-    await handleSubmitChallengeSelect(interaction);
-    return;
-  }
+      if (interaction.customId === "rin_submit_challenge_select") {
+        await handleSubmitChallengeSelect(interaction);
+        return;
+      }
 
-  if (interaction.customId.startsWith("rin_submit_outcome_select:")) {
-    await handleSubmitOutcomeSelect(interaction, client);
-    return;
-  }
-}
+      if (interaction.customId.startsWith("rin_submit_outcome_select:")) {
+        await handleSubmitOutcomeSelect(interaction, client);
+        return;
+      }
+    }
 
     if (interaction.isModalSubmit()) {
       if (interaction.customId === "rin_register_modal") {
         await handleRegisterModal(interaction, client);
         return;
       }
+
+      if (interaction.customId.startsWith("rin_bounty_")) {
+        await handleBountyModal(interaction, client);
+        return;
+      }
     }
   } catch (error) {
     console.error(error);
 
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: "❌ Rin ran into an error.",
-        ephemeral: true,
-      });
+    try {
+      if (interaction.deferred) {
+        await interaction.editReply({
+          content: "❌ Rin ran into an error.",
+        });
+      } else if (interaction.replied) {
+        await interaction.followUp({
+          content: "❌ Rin ran into an error.",
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          content: "❌ Rin ran into an error.",
+          ephemeral: true,
+        });
+      }
+    } catch (replyError) {
+      console.error("Could not send error response:", replyError);
     }
   }
+});
+
+client.on("error", error => {
+  console.error("Discord client error:", error);
+});
+
+process.on("unhandledRejection", error => {
+  console.error("Unhandled promise rejection:", error);
 });
 
 client.login(process.env.DISCORD_TOKEN);

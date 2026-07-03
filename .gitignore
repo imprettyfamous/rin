@@ -10,3 +10,8 @@ npm-debug.log
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Runtime data
+data/challenges.json
+data/ladder.json
+data/config.json
